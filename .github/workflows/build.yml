@@ -22,6 +22,13 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
+    - name: Download Gradle Wrapper JAR
+      run: |
+        mkdir -p gradle/wrapper
+        cd gradle/wrapper
+        curl -L https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar -o gradle-wrapper.jar
+        ls -la gradle-wrapper.jar
+
     - name: Grant execute permission
       run: chmod +x gradlew
 
@@ -52,8 +59,8 @@ jobs:
 
     - name: Success
       if: success()
-      run: echo "✅ Build successful! APKs ready for download."
+      run: echo "✅ Build successful!"
 
     - name: Failure
       if: failure()
-      run: echo "❌ Build failed! Check logs above for details."
+      run: echo "❌ Build failed!"
