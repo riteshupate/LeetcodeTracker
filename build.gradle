@@ -45,10 +45,6 @@ android {
         viewBinding false
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion '2.0.20'
-    }
-
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
