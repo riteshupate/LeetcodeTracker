@@ -4,34 +4,14 @@
     android:width="260dp"
     android:height="260dp">
 
-    <!-- Background -->
     <path
         android:pathData="M0,0h260v260h-260z"
         android:fillColor="#161B22" />
 
-    <!-- Widget frame -->
     <path
         android:pathData="M10,10h240a5,5 0 0,1 5,5v230a5,5 0 0,1 -5,5h-240a5,5 0 0,1 -5,-5v-230a5,5 0 0,1 5,-5z"
         android:fillColor="#1C2128" />
 
-    <!-- Header -->
-    <text
-        android:x="20"
-        android:y="35"
-        android:textSize="14"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:text="LeetCode" />
-
-    <text
-        android:x="200"
-        android:y="35"
-        android:textSize="12"
-        android:textColor="#FFFFFF"
-        android:text="🔥 50 ✓ 52" />
-
-    <!-- Heatmap preview cells -->
-    <!-- Row 1 -->
     <path android:pathData="M20,50h6v6h-6z" android:fillColor="#2D333B" />
     <path android:pathData="M30,50h6v6h-6z" android:fillColor="#0e4429" />
     <path android:pathData="M40,50h6v6h-6z" android:fillColor="#196f40" />
@@ -43,7 +23,6 @@
     <path android:pathData="M100,50h6v6h-6z" android:fillColor="#196f40" />
     <path android:pathData="M110,50h6v6h-6z" android:fillColor="#0e4429" />
 
-    <!-- Row 2 -->
     <path android:pathData="M20,60h6v6h-6z" android:fillColor="#39d353" />
     <path android:pathData="M30,60h6v6h-6z" android:fillColor="#26a641" />
     <path android:pathData="M40,60h6v6h-6z" android:fillColor="#2D333B" />
@@ -55,7 +34,6 @@
     <path android:pathData="M100,60h6v6h-6z" android:fillColor="#6bff8e" />
     <path android:pathData="M110,60h6v6h-6z" android:fillColor="#39d353" />
 
-    <!-- Row 3 -->
     <path android:pathData="M20,70h6v6h-6z" android:fillColor="#26a641" />
     <path android:pathData="M30,70h6v6h-6z" android:fillColor="#39d353" />
     <path android:pathData="M40,70h6v6h-6z" android:fillColor="#196f40" />
@@ -67,16 +45,6 @@
     <path android:pathData="M100,70h6v6h-6z" android:fillColor="#0e4429" />
     <path android:pathData="M110,70h6v6h-6z" android:fillColor="#2D333B" />
 
-    <!-- Status at bottom -->
-    <text
-        android:x="200"
-        android:y="95"
-        android:textSize="10"
-        android:textColor="#39D353"
-        android:textStyle="bold"
-        android:text="✓ Completed" />
-
-    <!-- Accent bar -->
     <path
         android:pathData="M10,10h240"
         android:strokeColor="#FFA116"
