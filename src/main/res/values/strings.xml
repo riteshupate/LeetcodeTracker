@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LeetCode Tracker</string>
+    <string name="widget_description">Track your LeetCode progress at a glance</string>
+    <string name="app_label">LeetCode Tracker</string>
+</resources>
