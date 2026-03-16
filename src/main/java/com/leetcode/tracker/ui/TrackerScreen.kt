@@ -1,21 +1,47 @@
 package com.leetcode.tracker.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.BorderStroke
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.leetcode.tracker.api.LeetCodeUserData
+import java.util.Calendar
 
 @Composable
 fun TrackerScreen(
@@ -216,13 +242,13 @@ private fun StatsSection(
                     value = data.totalSolved.toString(),
                     backgroundColor = Color(0xFFD3E3FD)
                 )
-                VerticalDivider()
+                VerticalDividerCustom()
                 StatItem(
                     label = "Streak",
                     value = "$streak days",
                     backgroundColor = Color(0xFFFFE0B2)
                 )
-                VerticalDivider()
+                VerticalDividerCustom()
                 StatItem(
                     label = "Today",
                     value = if (todaySolved) "✓" else "✗",
@@ -261,11 +287,9 @@ private fun StatsSection(
 }
 
 @Composable
-private fun RowScope.VerticalDivider() {
-    Divider(
-        modifier = Modifier
-            .width(1.dp)
-            .height(60.dp),
+private fun VerticalDividerCustom() {
+    VerticalDivider(
+        modifier = Modifier.height(60.dp),
         color = Color(0xFFE0E2EC)
     )
 }
@@ -293,7 +317,7 @@ private fun DifficultyBadge(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color),
+        border = BorderStroke(1.dp, color),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
@@ -340,19 +364,74 @@ private fun HeatmapSection(calendarData: Map<String, Int>) {
 
 @Composable
 private fun HeatmapGrid(calendarData: Map<String, Int>) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
             .background(Color(0xFFF9F9F9), RoundedCornerShape(8.dp))
             .padding(8.dp),
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(
-            "📊 Activity visualization",
-            style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF999999)
-        )
+        // 7 rows for days of week
+        repeat(7) { dayOfWeek ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                // Show last 12 weeks (12 columns)
+                repeat(12) { weekOffset ->
+                    val calendar = Calendar.getInstance()
+                    calendar.add(Calendar.WEEK_OF_YEAR, -(11 - weekOffset))
+                    calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+                    calendar.add(Calendar.DAY_OF_WEEK, dayOfWeek)
+                    
+                    val dateKey = String.format(
+                        "%d-%02d-%02d",
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH) + 1,
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    )
+                    
+                    val count = calendarData[dateKey] ?: 0
+                    val color = getHeatmapColor(count)
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(color, RoundedCornerShape(2.dp))
+                    )
+                }
+            }
+        }
+        
+        // Legend
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Less", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+            listOf(0, 1, 2, 3, 4).forEach { i ->
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(getHeatmapColor(i), RoundedCornerShape(1.dp))
+                )
+            }
+            Text("More", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+        }
+    }
+}
+
+private fun getHeatmapColor(count: Int): Color {
+    return when {
+        count == 0 -> Color(0xFFEBEDEF)
+        count == 1 -> Color(0xFF0e4429)
+        count == 2 -> Color(0xFF196f40)
+        count == 3 -> Color(0xFF26a641)
+        count == 4 -> Color(0xFF39d353)
+        else -> Color(0xFF6bff8e)
     }
 }
 
@@ -406,7 +485,7 @@ private fun ErrorSection(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
         shape = RoundedCornerShape(20.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF375F))
+        border = BorderStroke(1.dp, Color(0xFFFF375F))
     ) {
         Column(
             modifier = Modifier

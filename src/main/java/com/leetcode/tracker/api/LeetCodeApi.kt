@@ -1,5 +1,6 @@
 package com.leetcode.tracker.api
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ class LeetCodeApi {
         .build()
     
     private val gson = Gson()
+    private val tag = "LeetCodeApi"
     
     suspend fun getUserSubmissions(username: String): LeetCodeUserData? = withContext(Dispatchers.IO) {
         try {
@@ -62,23 +64,56 @@ class LeetCodeApi {
             
             val response = client.newCall(request).execute()
             
-            if (!response.isSuccessful) {
+            // Handle rate limiting (HTTP 429)
+            if (response.code == 429) {
+                Log.w(tag, "Rate limited by LeetCode API - HTTP 429")
                 return@withContext null
             }
             
-            val responseBody = response.body?.string() ?: return@withContext null
+            // Handle other HTTP errors
+            if (!response.isSuccessful) {
+                Log.e(tag, "HTTP Error: ${response.code} - ${response.message}")
+                return@withContext null
+            }
             
-            val jsonResponse = gson.fromJson(responseBody, JsonObject::class.java)
-            val matchedUser = jsonResponse.getAsJsonObject("data")
-                ?.getAsJsonObject("matchedUser") ?: return@withContext null
+            val responseBody = response.body?.string()
+            if (responseBody.isNullOrEmpty()) {
+                Log.e(tag, "Empty response body")
+                return@withContext null
+            }
             
-            if (matchedUser.isJsonNull) {
+            val jsonResponse = try {
+                gson.fromJson(responseBody, JsonObject::class.java)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to parse JSON response", e)
+                return@withContext null
+            }
+            
+            // Check for GraphQL errors
+            if (jsonResponse.has("errors")) {
+                val errors = jsonResponse.get("errors")
+                Log.e(tag, "GraphQL Error: $errors")
+                return@withContext null
+            }
+            
+            val dataObj = jsonResponse.getAsJsonObject("data") ?: run {
+                Log.e(tag, "No data field in response")
+                return@withContext null
+            }
+            
+            val matchedUser = dataObj.getAsJsonObject("matchedUser")
+            if (matchedUser == null || matchedUser.isJsonNull) {
+                Log.w(tag, "User not found or profile is private: $username")
                 return@withContext null
             }
 
             // Extract submission calendar
             val calendarJson = matchedUser.get("submissionCalendar")?.asString
-            val calendarMap = parseSubmissionCalendar(calendarJson)
+            val calendarMap = if (!calendarJson.isNullOrEmpty()) {
+                parseSubmissionCalendar(calendarJson)
+            } else {
+                emptyMap()
+            }
 
             // Extract difficulty counts
             var totalSolved = 0
@@ -87,18 +122,28 @@ class LeetCodeApi {
             var hardCount = 0
             
             val submitStats = matchedUser.getAsJsonObject("submitStats")
-            val acSubmissionNum = submitStats?.getAsJsonArray("acSubmissionNum")
-            
-            acSubmissionNum?.forEach { element ->
-                val obj = element.asJsonObject
-                when (obj.get("difficulty")?.asString) {
-                    "All" -> totalSolved = obj.get("count").asInt
-                    "Easy" -> easyCount = obj.get("count").asInt
-                    "Medium" -> mediumCount = obj.get("count").asInt
-                    "Hard" -> hardCount = obj.get("count").asInt
+            if (submitStats != null) {
+                val acSubmissionNum = submitStats.getAsJsonArray("acSubmissionNum")
+                
+                acSubmissionNum?.forEach { element ->
+                    try {
+                        val obj = element.asJsonObject
+                        val difficulty = obj.get("difficulty")?.asString ?: ""
+                        val count = obj.get("count")?.asInt ?: 0
+                        
+                        when (difficulty) {
+                            "All" -> totalSolved = count
+                            "Easy" -> easyCount = count
+                            "Medium" -> mediumCount = count
+                            "Hard" -> hardCount = count
+                        }
+                    } catch (e: Exception) {
+                        Log.w(tag, "Failed to parse submission count", e)
+                    }
                 }
             }
             
+            Log.d(tag, "Successfully fetched data for user: $username (Total: $totalSolved, Easy: $easyCount, Medium: $mediumCount, Hard: $hardCount)")
             return@withContext LeetCodeUserData(
                 totalSolved = totalSolved,
                 easyCount = easyCount,
@@ -108,13 +153,13 @@ class LeetCodeApi {
             )
             
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(tag, "Exception during API call", e)
             return@withContext null
         }
     }
     
-    private fun parseSubmissionCalendar(calendarJson: String?): Map<String, Int> {
-        if (calendarJson == null) return emptyMap()
+    private fun parseSubmissionCalendar(calendarJson: String): Map<String, Int> {
+        if (calendarJson.isBlank()) return emptyMap()
         
         val result = mutableMapOf<String, Int>()
         
@@ -139,10 +184,11 @@ class LeetCodeApi {
                     result[dateKey] = count
                 } catch (e: Exception) {
                     // Skip invalid entries
+                    Log.w(tag, "Failed to parse calendar entry for timestamp: $timestamp", e)
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(tag, "Exception parsing submission calendar", e)
         }
         
         return result

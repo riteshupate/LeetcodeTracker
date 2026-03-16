@@ -7,10 +7,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.leetcode.tracker.MainActivity
-import com.leetcode.tracker.R
 import com.leetcode.tracker.api.LeetCodeApi
+import com.leetcode.tracker.data.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,14 +19,16 @@ import java.util.Calendar
 
 class DailyReminderReceiver : BroadcastReceiver() {
     
+    private val tag = "DailyReminder"
+    
     override fun onReceive(context: Context, intent: Intent) {
-        // Get goAsync to handle long-running tasks
         val result = goAsync()
         
         CoroutineScope(Dispatchers.Default).launch {
             try {
-                val sharedPrefs = context.getSharedPreferences("leetcode_tracker", Context.MODE_PRIVATE)
-                val username = sharedPrefs.getString("username", "") ?: ""
+                // FIXED: Now properly uses the UserRepository to fetch the real data.
+                val repository = UserRepository(context)
+                val username = repository.getUsername()
                 
                 if (username.isNotEmpty()) {
                     val api = LeetCodeApi()
@@ -37,12 +40,23 @@ class DailyReminderReceiver : BroadcastReceiver() {
                         
                         if (solvedToday == 0) {
                             showNotification(context)
+                            Log.d(tag, "Reminder notification shown for user: $username")
+                        } else {
+                            Log.d(tag, "User already solved today, skipping notification")
                         }
+                    } else {
+                        Log.w(tag, "Failed to fetch user data")
                     }
+                } else {
+                    Log.d(tag, "Username not set, skipping reminder")
                 }
                 
                 // Reschedule for next day
-                rescheduleReminder(context, sharedPrefs)
+                val hour = repository.getReminderHour()
+                val minute = repository.getReminderMinute()
+                rescheduleReminder(context, hour, minute)
+            } catch (e: Exception) {
+                Log.e(tag, "Exception in DailyReminderReceiver", e)
             } finally {
                 result.finish()
             }
@@ -67,15 +81,13 @@ class DailyReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setVibrate(longArrayOf(0, 500, 250, 500))
             .build()
         
         notificationManager.notify(1, notification)
     }
     
-    private fun rescheduleReminder(context: Context, sharedPrefs: android.content.SharedPreferences) {
-        val hour = sharedPrefs.getInt("reminder_hour", 20)
-        val minute = sharedPrefs.getInt("reminder_minute", 0)
-        
+    private fun rescheduleReminder(context: Context, hour: Int, minute: Int) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -117,8 +129,9 @@ class DailyReminderReceiver : BroadcastReceiver() {
                     pendingIntent
                 )
             }
+            Log.d(tag, "Reminder rescheduled for $hour:$minute")
         } catch (e: SecurityException) {
-            e.printStackTrace()
+            Log.e(tag, "SecurityException scheduling alarm", e)
         }
     }
     

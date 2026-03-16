@@ -13,10 +13,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
+import android.util.Log
 import android.widget.RemoteViews
 import com.leetcode.tracker.MainActivity
 import com.leetcode.tracker.R
 import com.leetcode.tracker.api.LeetCodeApi
+import com.leetcode.tracker.data.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +26,8 @@ import java.util.Calendar
 import java.util.Locale
 
 class LeetCodeWidgetProvider : AppWidgetProvider() {
+
+    private val tag = "LeetCodeWidget"
 
     override fun onUpdate(
         context: Context,
@@ -64,10 +68,7 @@ class LeetCodeWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             val views = RemoteViews(context.packageName, R.layout.widget_layout)
-
-            val sharedPrefs = context.getSharedPreferences("leetcode_tracker", Context.MODE_PRIVATE)
-            val username = sharedPrefs.getString("username", "") ?: ""
-
+            
             val intent = Intent(context, MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(
                 context, 0, intent,
@@ -75,38 +76,53 @@ class LeetCodeWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
-            if (username.isNotEmpty()) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    val api = LeetCodeApi()
-                    val userData = api.getUserSubmissions(username)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // FIXED: Fetch data dynamically from DataStore
+                    val repository = UserRepository(context)
+                    val username = repository.getUsername()
 
-                    if (userData != null) {
-                        val streak = calculateStreak(userData.submissionCalendar)
-                        val todayKey = getTodayKey()
-                        val solvedToday = userData.submissionCalendar[todayKey] ?: 0 > 0
+                    if (username.isNotEmpty()) {
+                        val api = LeetCodeApi()
+                        val userData = api.getUserSubmissions(username)
 
-                        views.setTextViewText(R.id.widget_streak, "$streak")
-                        views.setTextViewText(R.id.widget_solved, "${userData.totalSolved}")
-                        views.setTextViewText(
-                            R.id.widget_status,
-                            if (solvedToday) "✓ Completed" else "⚠ Not yet"
-                        )
-                        views.setTextColor(
-                            R.id.widget_status,
-                            if (solvedToday) Color.parseColor("#39D353") else Color.parseColor("#FFA726")
-                        )
+                        if (userData != null) {
+                            val streak = calculateStreak(userData.submissionCalendar)
+                            val todayKey = getTodayKey()
+                            // FIXED: Operator precedence - wrap ?: 0 in parentheses
+                            val solvedToday = (userData.submissionCalendar[todayKey] ?: 0) > 0
 
-                        val heatmapBitmap = drawHeatmap(userData.submissionCalendar)
-                        views.setImageViewBitmap(R.id.widget_heatmap, heatmapBitmap)
+                            views.setTextViewText(R.id.widget_streak, "$streak")
+                            views.setTextViewText(R.id.widget_solved, "${userData.totalSolved}")
+                            views.setTextViewText(
+                                R.id.widget_status,
+                                if (solvedToday) "✓ Completed" else "⚠ Not yet"
+                            )
+                            views.setTextColor(
+                                R.id.widget_status,
+                                if (solvedToday) Color.parseColor("#39D353") else Color.parseColor("#FFA726")
+                            )
 
+                            val heatmapBitmap = drawHeatmap(userData.submissionCalendar)
+                            views.setImageViewBitmap(R.id.widget_heatmap, heatmapBitmap)
+
+                            appWidgetManager.updateAppWidget(appWidgetId, views)
+                            Log.d(tag, "Widget updated successfully for user: $username")
+                        } else {
+                            Log.e(tag, "Failed to fetch user data")
+                            views.setTextViewText(R.id.widget_status, "Error loading data")
+                            appWidgetManager.updateAppWidget(appWidgetId, views)
+                        }
+                    } else {
+                        views.setTextViewText(R.id.widget_streak, "0")
+                        views.setTextViewText(R.id.widget_solved, "0")
+                        views.setTextViewText(R.id.widget_status, "Set username")
                         appWidgetManager.updateAppWidget(appWidgetId, views)
+                        Log.d(tag, "Username not set")
                     }
+                } catch (e: Exception) {
+                    Log.e(tag, "Exception updating widget", e)
                 }
-            } else {
-                views.setTextViewText(R.id.widget_streak, "0")
-                views.setTextViewText(R.id.widget_solved, "0")
-                views.setTextViewText(R.id.widget_status, "Set username")
-                appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }
 
@@ -215,6 +231,19 @@ class LeetCodeWidgetProvider : AppWidgetProvider() {
             var streak = 0
             val calendar = Calendar.getInstance()
 
+            val todayKey = String.format(
+                "%d-%02d-%02d",
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+            if ((data[todayKey] ?: 0) > 0) {
+                streak++
+            }
+            
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+
             while (true) {
                 val dateKey = String.format(
                     "%d-%02d-%02d",
@@ -280,8 +309,9 @@ class LeetCodeWidgetProvider : AppWidgetProvider() {
                         pendingIntent
                     )
                 }
+                Log.d(tag, "Widget refresh scheduled every 10 minutes")
             } catch (e: SecurityException) {
-                e.printStackTrace()
+                Log.e(tag, "SecurityException scheduling widget refresh", e)
             }
         }
 
@@ -297,8 +327,9 @@ class LeetCodeWidgetProvider : AppWidgetProvider() {
             
             try {
                 alarmManager.cancel(pendingIntent)
+                Log.d(tag, "Widget refresh cancelled")
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(tag, "Exception cancelling widget refresh", e)
             }
         }
     }

@@ -26,17 +26,19 @@ import com.leetcode.tracker.data.UserRepository
 import com.leetcode.tracker.notifications.DailyReminderReceiver
 import com.leetcode.tracker.ui.TrackerScreen
 import com.leetcode.tracker.ui.TrackerViewModel
+import com.leetcode.tracker.ui.TrackerViewModelFactory
 import com.leetcode.tracker.ui.theme.LeetCodeTrackerTheme
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     
     private lateinit var viewModel: TrackerViewModel
+    
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Permission granted
+            // Permission granted - notifications will work
         }
     }
     
@@ -44,20 +46,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Initialize ViewModel
+        // Initialize repository and API
         val repository = UserRepository(this)
         val api = LeetCodeApi()
-        viewModel = ViewModelProvider(this, object : androidx.lifecycle.ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return TrackerViewModel(repository, api) as T
-            }
-        }).get(TrackerViewModel::class.java)
+        
+        // Initialize ViewModel
+        viewModel = ViewModelProvider(
+            this,
+            TrackerViewModelFactory(repository, api)
+        ).get(TrackerViewModel::class.java)
         
         // Create notification channel
         createNotificationChannel()
         
-        // Request permissions
+        // Request notification permission for Android 13+
         requestNotificationPermission()
         
         setContent {
@@ -87,6 +89,8 @@ class MainActivity : ComponentActivity() {
     private fun scheduleReminder(hour: Int, minute: Int) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, DailyReminderReceiver::class.java)
+        intent.action = "com.leetcode.tracker.REMINDER_ALARM"
+        
         val pendingIntent = PendingIntent.getBroadcast(
             this,
             0,
@@ -140,6 +144,8 @@ class MainActivity : ComponentActivity() {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Daily reminders to solve LeetCode problems"
+                enableVibration(true)
+                setShowBadge(true)
             }
             
             val notificationManager = getSystemService(NotificationManager::class.java)

@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.leetcode.tracker">
 
     <!-- Required Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_schemes"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:enableOnBackInvokedCallback="true"
-        android:usesCleartextTraffic="false"
-        android:theme="@style/Theme.LeetCodeTracker">
+        android:theme="@style/Theme.LeetCodeTracker"
+        tools:targetApi="31">
 
         <!-- Main Activity -->
         <activity
@@ -29,11 +31,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Widget Provider -->
+        <!-- FIXED: Widget Receiver - No android:permission attribute -->
         <receiver
             android:name=".widget.LeetCodeWidgetProvider"
-            android:exported="true"
-            android:permission="android.permission.BIND_APPWIDGET">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.leetcode.tracker.REFRESH_WIDGET" />
@@ -43,14 +44,13 @@
                 android:resource="@xml/widget_provider_info" />
         </receiver>
 
-        <!-- Daily Reminder Receiver -->
+        <!-- FIXED: Daily Reminder Receiver using DataStore -->
         <receiver
             android:name=".notifications.DailyReminderReceiver"
-            android:exported="true"
-            android:enabled="true">
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="com.leetcode.tracker.REMINDER_ALARM" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

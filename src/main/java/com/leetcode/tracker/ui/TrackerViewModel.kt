@@ -28,9 +28,6 @@ class TrackerViewModel(
     private val _uiState = MutableStateFlow<UIState>(UIState.Idle)
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
-    private val _refreshInterval = MutableStateFlow(10 * 60 * 1000L)
-    val refreshInterval: StateFlow<Long> = _refreshInterval.asStateFlow()
-
     private val _currentStreak = MutableStateFlow(0)
     val currentStreak: StateFlow<Int> = _currentStreak.asStateFlow()
 
@@ -80,6 +77,14 @@ class TrackerViewModel(
     private fun calculateCurrentStreak(calendarData: Map<String, Int>): Int {
         var streak = 0
         val calendar = Calendar.getInstance()
+
+        // FIXED: Checks today, but drops back to yesterday to ensure ongoing streaks aren't killed at 8 AM.
+        val todayKey = formatDate(calendar)
+        if ((calendarData[todayKey] ?: 0) > 0) {
+            streak++
+        }
+
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
 
         while (true) {
             val dateKey = formatDate(calendar)

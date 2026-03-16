@@ -8,16 +8,17 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private const val USER_PREFERENCES_NAME = "leetcode_tracker_preferences"
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = USER_PREFERENCES_NAME)
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = USER_PREFERENCES_NAME)
 
 object PreferenceKeys {
     val USERNAME = stringPreferencesKey("username")
     val REMINDER_HOUR = intPreferencesKey("reminder_hour")
     val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
-    val REMINDER_ENABLED = intPreferencesKey("reminder_enabled") // 0 = false, 1 = true
+    val REMINDER_ENABLED = intPreferencesKey("reminder_enabled")
     val LAST_FETCH_TIME = stringPreferencesKey("last_fetch_time")
 }
 
@@ -59,17 +60,21 @@ class UserRepository(private val context: Context) {
         }
     }
     
+    // FIXED: Correctly reads the actual string value from DataStore
     suspend fun getUsername(): String {
-        return context.dataStore.data.map { preferences ->
-            preferences[PreferenceKeys.USERNAME] ?: ""
-        }.map { it }.also { flow ->
-            // This is a one-time read, using the flow once
-        }.toString()
+        return context.dataStore.data.first()[PreferenceKeys.USERNAME] ?: ""
     }
     
+    // FIXED: Correctly reads the actual int value
     suspend fun getReminderHour(): Int {
-        return context.dataStore.data.map { preferences ->
-            preferences[PreferenceKeys.REMINDER_HOUR] ?: 20
-        }.toString().toIntOrNull() ?: 20
+        return context.dataStore.data.first()[PreferenceKeys.REMINDER_HOUR] ?: 20
+    }
+
+    suspend fun getReminderMinute(): Int {
+        return context.dataStore.data.first()[PreferenceKeys.REMINDER_MINUTE] ?: 0
+    }
+    
+    suspend fun isReminderEnabled(): Boolean {
+        return context.dataStore.data.first()[PreferenceKeys.REMINDER_ENABLED] == 1
     }
 }
