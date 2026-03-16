@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.leetcode.tracker">
 
-    <!-- Required Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -12,15 +11,15 @@
 
     <application
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_schemes"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="false"
         android:theme="@style/Theme.LeetCodeTracker"
         tools:targetApi="31">
 
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,7 +30,6 @@
             </intent-filter>
         </activity>
 
-        <!-- FIXED: Widget Receiver - No android:permission attribute -->
         <receiver
             android:name=".widget.LeetCodeWidgetProvider"
             android:exported="true">
@@ -44,7 +42,6 @@
                 android:resource="@xml/widget_provider_info" />
         </receiver>
 
-        <!-- FIXED: Daily Reminder Receiver using DataStore -->
         <receiver
             android:name=".notifications.DailyReminderReceiver"
             android:exported="true">
