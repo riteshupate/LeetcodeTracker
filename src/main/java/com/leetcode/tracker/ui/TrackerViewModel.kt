@@ -52,4 +52,59 @@ class TrackerViewModel(
                 val userData = api.getUserSubmissions(username)
 
                 if (userData != null) {
-                    _currentStreak.update { calculateCurrentStreak(userData.submis
+                    val calendar = userData.submissionCalendar
+                    _currentStreak.update { calculateCurrentStreak(calendar) }
+                    _todaySolved.update { isTodaySolved(calendar) }
+                    _uiState.update { UIState.Success(userData) }
+                } else {
+                    _uiState.update {
+                        UIState.Error("User not found or profile is private. Check username.")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    UIState.Error("Error: ${e.localizedMessage ?: "Unknown error"}")
+                }
+            }
+        }
+    }
+
+    fun retryFetch(username: String) {
+        viewModelScope.launch {
+            _uiState.update { UIState.Idle }
+            delay(500)
+            fetchUserData(username)
+        }
+    }
+
+    private fun calculateCurrentStreak(calendarData: Map<String, Int>): Int {
+        var streak = 0
+        val calendar = Calendar.getInstance()
+
+        while (true) {
+            val dateKey = formatDate(calendar)
+            if ((calendarData[dateKey] ?: 0) > 0) {
+                streak++
+                calendar.add(Calendar.DAY_OF_YEAR, -1)
+            } else {
+                break
+            }
+        }
+
+        return streak
+    }
+
+    private fun isTodaySolved(calendarData: Map<String, Int>): Boolean {
+        val todayKey = formatDate(Calendar.getInstance())
+        return (calendarData[todayKey] ?: 0) > 0
+    }
+
+    private fun formatDate(calendar: Calendar): String {
+        return String.format(
+            "%d-%02d-%02d",
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
+}
