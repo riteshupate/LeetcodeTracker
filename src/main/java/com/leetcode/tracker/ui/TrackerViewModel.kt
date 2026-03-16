@@ -37,11 +37,13 @@ class TrackerViewModel(
     private val _todaySolved = MutableStateFlow(false)
     val todaySolved: StateFlow<Boolean> = _todaySolved.asStateFlow()
     
-    fun fetchUserData(username: String) {
-        if (username.isBlank()) {
-            _uiState.update { UIState.Error("Username cannot be empty") }
-            return
-        }
+    fun retryFetch(username: String) {
+    viewModelScope.launch {
+        _uiState.update { UIState.Idle }
+        delay(500)
+        fetchUserData(username)
+    }
+}
         
         viewModelScope.launch {
             _uiState.update { UIState.Loading }

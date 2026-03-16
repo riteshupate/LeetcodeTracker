@@ -5,33 +5,33 @@ plugins {
 }
 
 android {
-    namespace 'com.leetcode.tracker'
-    compileSdk 36
+    namespace = 'com.leetcode.tracker'
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "com.leetcode.tracker"
-        minSdk 26
-        targetSdk 36
-        versionCode 1
-        versionName "1.0.0"
+        applicationId = "com.leetcode.tracker"
+        minSdk = 26
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            minifyEnabled false
+            minifyEnabled = false
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
@@ -39,8 +39,8 @@ android {
     }
 
     buildFeatures {
-        compose true
-        viewBinding false
+        compose = true
+        viewBinding = false
     }
 
     packagingOptions {
