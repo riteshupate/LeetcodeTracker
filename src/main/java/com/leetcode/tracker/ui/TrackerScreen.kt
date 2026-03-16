@@ -1,14 +1,9 @@
 package com.leetcode.tracker.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
@@ -18,11 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.leetcode.tracker.R
 import com.leetcode.tracker.api.LeetCodeUserData
 
 @Composable
@@ -34,7 +26,7 @@ fun TrackerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currentStreak by viewModel.currentStreak.collectAsState()
     val todaySolved by viewModel.todaySolved.collectAsState()
-    
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -42,12 +34,10 @@ fun TrackerScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
         item {
             HeaderCard()
         }
-        
-        // Input Section
+
         item {
             InputSection(
                 username = username,
@@ -58,11 +48,10 @@ fun TrackerScreen(
                 }
             )
         }
-        
-        // Stats Section
+
         if (uiState is UIState.Success) {
             val data = (uiState as UIState.Success).data
-            
+
             item {
                 StatsSection(
                     data = data,
@@ -70,17 +59,16 @@ fun TrackerScreen(
                     todaySolved = todaySolved
                 )
             }
-            
+
             item {
                 HeatmapSection(data.submissionCalendar)
             }
-            
+
             item {
                 ReminderSection(onSetReminder = onSetReminder)
             }
         }
-        
-        // Error Section
+
         if (uiState is UIState.Error) {
             item {
                 ErrorSection(
@@ -89,14 +77,13 @@ fun TrackerScreen(
                 )
             }
         }
-        
-        // Loading Indicator
+
         if (uiState is UIState.Loading) {
             item {
                 LoadingSection()
             }
         }
-        
+
         item {
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -107,9 +94,7 @@ fun TrackerScreen(
 private fun HeaderCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1A73E8)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A73E8)),
         shape = RoundedCornerShape(24.dp)
     ) {
         Column(
@@ -142,9 +127,7 @@ private fun InputSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -159,7 +142,7 @@ private fun InputSection(
                 style = MaterialTheme.typography.titleLarge,
                 color = Color(0xFF1A1A1E)
             )
-            
+
             OutlinedTextField(
                 value = username,
                 onValueChange = onUsernameChange,
@@ -168,25 +151,16 @@ private fun InputSection(
                 placeholder = { Text("e.g., rpupate") },
                 singleLine = true,
                 enabled = !isLoading,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { onSaveClick() }
-                ),
                 shape = RoundedCornerShape(12.dp)
             )
-            
+
             Button(
                 onClick = onSaveClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 enabled = username.isNotEmpty() && !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1A73E8)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (isLoading) {
@@ -213,9 +187,7 @@ private fun StatsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -227,10 +199,10 @@ private fun StatsSection(
             Text(
                 "Your Stats",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF1A1A1E),
-                modifier = Modifier.marginBottom(16.dp)
+                color = Color(0xFF1A1A1E)
             )
-            
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -244,23 +216,13 @@ private fun StatsSection(
                     value = data.totalSolved.toString(),
                     backgroundColor = Color(0xFFD3E3FD)
                 )
-                Divider(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(60.dp),
-                    color = Color(0xFFE0E2EC)
-                )
+                VerticalDivider()
                 StatItem(
-                    label = "Current Streak",
+                    label = "Streak",
                     value = "$streak days",
                     backgroundColor = Color(0xFFFFE0B2)
                 )
-                Divider(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(60.dp),
-                    color = Color(0xFFE0E2EC)
-                )
+                VerticalDivider()
                 StatItem(
                     label = "Today",
                     value = if (todaySolved) "✓" else "✗",
@@ -268,21 +230,44 @@ private fun StatsSection(
                     backgroundColor = Color(0xFFE8F5E9)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
-            // Difficulty Breakdown
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                DifficultyBadge("Easy", data.easyCount, Color(0xFF00b8a3))
-                DifficultyBadge("Medium", data.mediumCount, Color(0xFFFFA116))
-                DifficultyBadge("Hard", data.hardCount, Color(0xFFff375f))
+                DifficultyBadge(
+                    label = "Easy",
+                    count = data.easyCount,
+                    color = Color(0xFF00b8a3),
+                    modifier = Modifier.weight(1f)
+                )
+                DifficultyBadge(
+                    label = "Medium",
+                    count = data.mediumCount,
+                    color = Color(0xFFFFA116),
+                    modifier = Modifier.weight(1f)
+                )
+                DifficultyBadge(
+                    label = "Hard",
+                    count = data.hardCount,
+                    color = Color(0xFFff375f),
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
+}
+
+@Composable
+private fun RowScope.VerticalDivider() {
+    Divider(
+        modifier = Modifier
+            .width(1.dp)
+            .height(60.dp),
+        color = Color(0xFFE0E2EC)
+    )
 }
 
 @Composable
@@ -292,19 +277,9 @@ private fun StatItem(
     textColor: Color = Color(0xFF1A73E8),
     backgroundColor: Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            value,
-            style = MaterialTheme.typography.headlineSmall,
-            color = textColor
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF666666)
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.headlineSmall, color = textColor)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
     }
 }
 
@@ -312,14 +287,13 @@ private fun StatItem(
 private fun DifficultyBadge(
     label: String,
     count: Int,
-    color: Color
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.weight(1f),
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.1f)
-        ),
-        border = CardBorder(width = 1.dp, color = color),
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
@@ -338,9 +312,7 @@ private fun DifficultyBadge(
 private fun HeatmapSection(calendarData: Map<String, Int>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -354,14 +326,13 @@ private fun HeatmapSection(calendarData: Map<String, Int>) {
                 style = MaterialTheme.typography.titleLarge,
                 color = Color(0xFF1A1A1E)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "Last 365 days showing your problem-solving activity",
+                "Last 365 days of problem-solving activity",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF666666)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            
             HeatmapGrid(calendarData)
         }
     }
@@ -369,7 +340,6 @@ private fun HeatmapSection(calendarData: Map<String, Int>) {
 
 @Composable
 private fun HeatmapGrid(calendarData: Map<String, Int>) {
-    // Simple heatmap visualization
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -390,9 +360,7 @@ private fun HeatmapGrid(calendarData: Map<String, Int>) {
 private fun ReminderSection(onSetReminder: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8D4EA)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8D4EA)),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -413,15 +381,12 @@ private fun ReminderSection(onSetReminder: () -> Unit) {
                 color = Color(0xFF666666)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            
             Button(
                 onClick = onSetReminder,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF7D5260)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7D5260)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Filled.Notifications, contentDescription = null)
@@ -439,38 +404,25 @@ private fun ErrorSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFEBEE)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
         shape = RoundedCornerShape(20.dp),
-        border = CardBorder(width = 1.dp, color = Color(0xFFFF375F))
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF375F))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Text(
-                "Error",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFFFF375F)
-            )
+            Text("Error", style = MaterialTheme.typography.titleLarge, color = Color(0xFFFF375F))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF666666)
-            )
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666))
             Spacer(modifier = Modifier.height(12.dp))
-            
             Button(
                 onClick = onRetry,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF375F)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF375F)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Filled.Refresh, contentDescription = null)
@@ -489,14 +441,6 @@ private fun LoadingSection() {
             .height(200.dp),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(
-            color = Color(0xFF1A73E8)
-        )
+        CircularProgressIndicator(color = Color(0xFF1A73E8))
     }
 }
-
-private fun Modifier.marginBottom(value: Dp): Modifier =
-    this.padding(bottom = value)
-
-private fun CardBorder(width: Dp, color: Color): androidx.compose.foundation.BorderStroke =
-    androidx.compose.foundation.BorderStroke(width, color)
